@@ -162,12 +162,11 @@ func trailingDigits(s string) string {
 // parseNumList("3,5,7") -> {"3":{}, "5":{}, "7":{}}
 func parseNumList(s string) map[string]struct{} {
 	res := map[string]struct{}{}
-	for _, part := range strings.Split(s, ",") {
+	rx := regexp.MustCompile(`^\d+$`)
+
+	for part := range strings.SplitSeq(s, ",") {
 		part = strings.TrimSpace(part)
-		if part == "" {
-			continue
-		}
-		if matched, _ := regexp.MatchString(`^\d+$`, part); matched {
+		if rx.MatchString(part) {
 			res[part] = struct{}{}
 		}
 	}
