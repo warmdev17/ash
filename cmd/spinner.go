@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"runtime"
 	"time"
 
 	"github.com/mattn/go-isatty"
@@ -126,16 +125,4 @@ func indent(s, pad string) string {
 		out.WriteByte('\n')
 	}
 	return out.String()
-}
-
-// defaultConcurrency picks a reasonable worker count for this machine.
-func defaultConcurrency() int {
-	n := runtime.NumCPU() / 2
-	if n < 2 {
-		n = 2
-	}
-	if n > 8 {
-		n = 8
-	}
-	return n
 }
