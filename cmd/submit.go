@@ -92,11 +92,11 @@ Examples:
 			}
 			repoDir := filepath.Join(wd, p.Name)
 			if _, err := os.Stat(repoDir); err != nil {
-				fmt.Printf("⏭️  Skip (not found): %s\n", p.Name)
+				fmt.Printf("%s  Skip (not found): %s\n", icArrow, p.Name)
 				continue
 			}
 			if _, err := os.Stat(filepath.Join(repoDir, ".git")); err != nil {
-				fmt.Printf("⏭️  Skip (not a git repo): %s\n", p.Name)
+				fmt.Printf("%s  Skip (not a git repo): %s\n", icArrow, p.Name)
 				continue
 			}
 
@@ -104,13 +104,13 @@ Examples:
 			st := exec.Command("git", "-C", repoDir, "status", "--porcelain")
 			out, _ := st.Output()
 			if len(out) == 0 {
-				fmt.Printf("✔  Clean (no changes): %s\n", p.Name)
+				fmt.Printf("%s  Clean (no changes): %s\n", icOk, p.Name)
 				continue
 			}
 
 			// Stage all changes
 			if err := exec.Command("git", "-C", repoDir, "add", "-A").Run(); err != nil {
-				fmt.Printf("❌ Add failed: %s (%v)\n", p.Name, err)
+				fmt.Printf("%s Add failed: %s (%v)\n", icErr, p.Name, err)
 				continue
 			}
 
@@ -123,20 +123,20 @@ Examples:
 
 			commit := exec.Command("git", "-C", repoDir, "commit", "-m", msg)
 			if err := commit.Run(); err != nil {
-				fmt.Printf("❌ Commit failed: %s (%v)\n", p.Name, err)
+				fmt.Printf("%s Commit failed: %s (%v)\n", icErr, p.Name, err)
 				continue
 			}
 
 			// Push to remote
 			push := exec.Command("git", "-C", repoDir, "push", "--quiet")
 			if err := push.Run(); err != nil {
-				fmt.Printf("❌ Push failed: %s (%v)\n", p.Name, err)
+				fmt.Printf("%s Push failed: %s (%v)\n", icErr, p.Name, err)
 				continue
 			}
-			fmt.Printf("🚀 Submitted: %s\n", p.Name)
+			fmt.Printf("%s Submitted: %s\n", icRun, p.Name)
 		}
 
-		fmt.Println("✅ All done.")
+		fmt.Printf("%s All done.", icOk)
 		return nil
 	},
 }

@@ -25,8 +25,8 @@ var verifyCmd = &cobra.Command{
 Examples:
   ash verify -t <token> -g ssh
   ash verify -t <token> -g https`,
-	SilenceUsage:  true,
-	SilenceErrors: true, // Cobra won't print errors automatically
+	SilenceUsage:  false, // Print usage when missing flags
+	SilenceErrors: true,  // Cobra won't print errors automatically
 
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// --- Validate token ---
@@ -55,13 +55,15 @@ Examples:
 		login.Stderr = os.Stderr
 
 		if err := login.Run(); err != nil {
-			return fmt.Errorf("glab login failed: %w", err)
+			return fmt.Errorf("%s glab login failed: %w", icErr, err)
 		}
 
 		// --- Verify authentication status ---
 		status := exec.Command("glab", "auth", "status", "--hostname", Host, "--show-token")
 		status.Stdout = os.Stdout
 		status.Stderr = os.Stderr
+
+		// --- Set default host to git.rikkei.edu.vn
 
 		if err := status.Run(); err != nil {
 			return fmt.Errorf("auth status check failed: %w", err)
@@ -75,7 +77,7 @@ func init() {
 	rootCmd.AddCommand(verifyCmd)
 
 	verifyCmd.Flags().StringVarP(&Token, "token", "t", "", "Personal Access Token (PAT) for authentication")
-	verifyCmd.Flags().Lookup("token").NoOptDefVal = "" // allow `-t` with no argument
+	// verifyCmd.Flags().Lookup("token").NoOptDefVal = "" // allow `-t` with no argument
 
 	verifyCmd.Flags().StringVar(&Host, "hostname", "git.rikkei.edu.vn", "GitLab hostname")
 	verifyCmd.Flags().StringVar(&APIHost, "api-host", "git.rikkei.edu.vn:443", "API host (host:port)")

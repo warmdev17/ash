@@ -331,26 +331,36 @@ func cloneGroupHierarchy(group groupIdent, rootDir, proto string, isRoot bool) e
 	}
 
 	// 2) Clone projects at this level (both root and subgroups may have projects)
+	// 2) Clone projects at this level (both root and subgroups may have projects)
 	if len(projects) > 0 {
-		fmt.Printf("Found %d project(s) in group %d\n", len(projects), group.ID)
-	}
-	for _, p := range projects {
-		url := p.SSHURLToRepo
-		if proto == "https" {
-			url = p.HTTPURLToRepo
-		}
-		dest := filepath.Join(rootDir, p.Name) // use Name for directory
+		// Batch clone with spinner (no noisy per-repo logs)
+		title := fmt.Sprintf("Cloning %d project(s) in %s …", len(projects), rootDir)
+		var okList, badList []CloneResult
 
-		if _, err := os.Stat(dest); err == nil {
-			fmt.Printf("Skip (exists): %s\n", dest)
-			continue
-		}
-		clone := exec.Command("git", "clone", "--quiet", url, dest)
-		if err := clone.Run(); err != nil {
-			fmt.Printf("clone failed: %s (%v)\n", p.Name, err)
-			continue
-		}
-		fmt.Printf("cloned %s\n", p.Name)
+		_ = runWithSpinner(title, func() error {
+			for _, p := range projects {
+				url := p.SSHURLToRepo
+				if proto == "https" {
+					url = p.HTTPURLToRepo
+				}
+				dest := filepath.Join(rootDir, p.Name) // use Name for directory
+
+				if _, err := os.Stat(dest); err == nil {
+					// existed locally → treat as success but skip
+					okList = append(okList, CloneResult{Name: p.Name, URL: url, Dest: dest})
+					continue
+				}
+				res := cloneOneRepo(url, dest, p.Name)
+				if res.Err != nil {
+					badList = append(badList, res)
+				} else {
+					okList = append(okList, res)
+				}
+			}
+			return nil
+		})
+
+		printCloneSummary(okList, badList)
 	}
 
 	// 3) Recurse into subgroups

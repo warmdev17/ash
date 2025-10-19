@@ -14,10 +14,10 @@ import (
 )
 
 var (
-	repoName   string // -n : tạo 1 repo với tên cụ thể
-	repoCount  int    // -c : số lượng khi tạo loạt
-	repoPrefix string // -p : tiền tố khi tạo loạt
-	repoProto  string // --proto ssh|https (mặc định https)
+	repoName   string // -n :
+	repoCount  int    // -c :
+	repoPrefix string // -p :
+	repoProto  string // --proto ssh|https
 )
 
 var repoCmd = &cobra.Command{
@@ -83,7 +83,7 @@ Examples:
 			}
 			path := slugify(display) // reuse helper from init.go
 
-			fmt.Printf("🚀 Creating project: name=%q path=%q namespace_id=%d\n", display, path, meta.Group.ID)
+			fmt.Printf("%s Creating project: name=%q path=%q namespace_id=%d\n", icRun, display, path, meta.Group.ID)
 			create := exec.Command("glab", "api", "-X", "POST", "/projects",
 				"-f", "name="+display,
 				"-f", "path="+path,
@@ -92,21 +92,21 @@ Examples:
 			)
 			out, err := create.Output()
 			if err != nil {
-				fmt.Printf("❌ create failed for %s: %v\n", display, err)
+				fmt.Printf("%s create failed for %s: %v\n", icErr, display, err)
 				continue
 			}
 
 			// parse response using glProject (already defined in codebase)
 			var pr glProject
 			if err := json.Unmarshal(out, &pr); err != nil {
-				fmt.Printf("❌ parse create response failed for %s: %v\n", display, err)
+				fmt.Printf("%s parse create response failed for %s: %v\n", icErr, display, err)
 				continue
 			}
 			if pr.ID == 0 {
-				fmt.Printf("❌ unexpected response for %s (no ID)\n", display)
+				fmt.Printf("%s unexpected response for %s (no ID)\n", icErr, display)
 				continue
 			}
-			fmt.Printf("✔ created: id=%d name=%q path=%q\n", pr.ID, pr.Name, pr.Path)
+			fmt.Printf("%s created: id=%d name=%q path=%q\n", icOk, pr.ID, pr.Name, pr.Path)
 
 			// clone locally into folder named by display Name
 			dest := filepath.Join(wd, display)
@@ -114,13 +114,13 @@ Examples:
 			if repoProto == "https" {
 				url = pr.HTTPURLToRepo
 			}
-			fmt.Printf("⎇ cloning → %s\n", dest)
+			fmt.Printf("%s cloning → %s\n", icDownload, dest)
 			clone := exec.Command("git", "clone", "--quiet", url, dest)
 			if err := clone.Run(); err != nil {
-				fmt.Printf("❌ clone failed: %s (%v)\n", display, err)
+				fmt.Printf("%s clone failed: %s (%v)\n", icErr, display, err)
 				continue
 			}
-			fmt.Printf("✅ cloned %s\n", display)
+			fmt.Printf("%s cloned %s\n", icOk, display)
 			createdAny = true
 		}
 
@@ -139,10 +139,10 @@ Examples:
 			if err := writeSubgroupJSON(ashDir, meta); err != nil {
 				return fmt.Errorf("write subgroup.json failed: %w", err)
 			}
-			fmt.Println("✨ Updated .ash/subgroup.json")
+			fmt.Printf("%s Updated .ash/subgroup.json", icInfo)
 		}
 
-		fmt.Println("✅ Done.")
+		fmt.Printf("%s Done.", icOk)
 		return nil
 	},
 }

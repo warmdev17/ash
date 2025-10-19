@@ -23,7 +23,7 @@ var subgroupCmd = &cobra.Command{
 	Long: `Run inside a group root directory (one that has .ash/group.json).
 Example:
   cd IT108_K25_LeTrungHieu
-  ash subgroup -n "Session1" [-d "S1"]  # -d để đặt tên thư mục local tuỳ ý
+  ash subgroup -n "Session1" [-d "S1"]
 
 It will:
   • Create the subgroup on GitLab (visibility=public) under the current group.
@@ -130,12 +130,12 @@ It will:
 			if err := writeGroupJSON(ashDir, meta); err != nil {
 				return fmt.Errorf("update group.json failed: %w", err)
 			}
-			fmt.Println("✨ Updated parent .ash/group.json")
+			fmt.Printf("%s Updated parent .ash/group.json", icInfo)
 		} else {
-			fmt.Println("ℹ️ Subgroup already listed in parent group.json; no change")
+			fmt.Printf("%s Subgroup already listed in parent group.json; no change", icInfo)
 		}
 
-		fmt.Println("✅ Done.")
+		fmt.Printf("%s Done.", icOk)
 		return nil
 	},
 }

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -75,7 +74,7 @@ func init() {
 // ---------------- Root group sync (.ash/group.json) ----------------
 
 func syncRootGroup(rootDir, metaPath string) error {
-	fmt.Println("🔍 Reading .ash/group.json ...")
+	fmt.Printf("%s Reading .ash/group.json ...", icInfo)
 	var meta rootGroupMeta
 	if err := readJSON(metaPath, &meta); err != nil {
 		return fmt.Errorf("parse group.json failed: %w", err)
@@ -85,7 +84,7 @@ func syncRootGroup(rootDir, metaPath string) error {
 	}
 
 	// Fetch latest subgroups from GitLab
-	fmt.Printf("🌐 Fetching subgroups for group %d ...\n", meta.Group.ID)
+	fmt.Printf("%s Fetching subgroups for group %d ...\n", icCloud, meta.Group.ID)
 	sgs, err := apiListSubgroups(meta.Group.ID)
 	if err != nil {
 		return err
@@ -115,9 +114,9 @@ func syncRootGroup(rootDir, metaPath string) error {
 	for name, sg := range newMap {
 		if _, ok := oldMap[name]; !ok {
 			if syncDry {
-				fmt.Printf("➕ [dry-run] would add subgroup folder: %s\n", name)
+				fmt.Printf("%s [dry-run] would add subgroup folder: %s\n", icAdd, name)
 			} else {
-				fmt.Printf("➕ Add subgroup folder: %s\n", name)
+				fmt.Printf("%s Add subgroup folder: %s\n", icAdd, name)
 				sgDir := filepath.Join(rootDir, name)
 				if err := os.MkdirAll(sgDir, 0o755); err != nil {
 					return fmt.Errorf("create subgroup dir %q: %w", sgDir, err)
@@ -139,29 +138,29 @@ func syncRootGroup(rootDir, metaPath string) error {
 			}
 			if syncClean {
 				if syncDry {
-					fmt.Printf("🗑️  [dry-run] would remove missing subgroup: %s\n", sgDir)
+					fmt.Printf("%s  [dry-run] would remove missing subgroup: %s\n", icRemove, sgDir)
 				} else {
-					fmt.Printf("🗑️  Remove missing subgroup: %s\n", sgDir)
+					fmt.Printf("%s  Remove missing subgroup: %s\n", icRemove, sgDir)
 					if err := os.RemoveAll(sgDir); err != nil {
 						return fmt.Errorf("remove subgroup dir %q: %w", sgDir, err)
 					}
 				}
 			} else {
-				fmt.Printf("⚠️  Missing on GitLab: %s (use --clean to remove)\n", sgDir)
+				fmt.Printf("%s  Missing on GitLab: %s (use --clean to remove)\n", icWarn, sgDir)
 			}
 		}
 	}
 
 	// Update group.json with fresh subgroup list
 	if syncDry {
-		fmt.Println("✨ [dry-run] would update .ash/group.json with latest subgroups")
+		fmt.Printf("%s [dry-run] would update .ash/group.json with latest subgroups", icInfo)
 		return nil
 	}
 	meta.Subgroups = newSubgroups
 	if err := writeGroupJSON(filepath.Join(rootDir, ".ash"), meta); err != nil {
 		return fmt.Errorf("write group.json failed: %w", err)
 	}
-	fmt.Println("✨ Updated .ash/group.json successfully")
+	fmt.Printf("%s Updated .ash/group.json successfully", icInfo)
 	return nil
 }
 
@@ -191,7 +190,7 @@ func writeSubgroupSnapshot(subgroupDir string, gid groupIdent) error {
 // ---------------- Subgroup sync (.ash/subgroup.json) ----------------
 
 func syncSubgroup(rootDir, metaPath string) error {
-	fmt.Println("🔍 Reading .ash/subgroup.json ...")
+	fmt.Printf("%s Reading .ash/subgroup.json ...", icInfo)
 	var meta subgroupMeta
 	if err := readJSON(metaPath, &meta); err != nil {
 		return fmt.Errorf("parse subgroup.json failed: %w", err)
@@ -201,7 +200,7 @@ func syncSubgroup(rootDir, metaPath string) error {
 	}
 
 	// Fetch latest projects from GitLab
-	fmt.Printf("🌐 Fetching projects for group %d ...\n", meta.Group.ID)
+	fmt.Printf("%s Fetching projects for group %d ...\n", icCloud, meta.Group.ID)
 	projects, err := apiListProjects(meta.Group.ID)
 	if err != nil {
 		return err
@@ -227,35 +226,51 @@ func syncSubgroup(rootDir, metaPath string) error {
 		newMap[x.Name] = x
 	}
 
-	// Added projects → clone
+	// Added projects → clone (batch with spinner)
+	var added []projectIdent
 	for name := range newMap {
 		if _, ok := oldMap[name]; !ok {
-			dest := filepath.Join(rootDir, name)
-			if syncDry {
-				fmt.Printf("➕ [dry-run] would clone: %s\n", name)
-				continue
-			}
-			fmt.Printf("➕ Clone: %s\n", name)
+			added = append(added, newMap[name])
+		}
+	}
 
-			// find full project info to get clone URL
-			var full glProject
-			for _, p := range projects {
-				if p.Name == name {
-					full = p
-					break
+	if len(added) > 0 {
+		title := fmt.Sprintf("Cloning %d new repo(s)…", len(added))
+		var okList, badList []CloneResult
+
+		if syncDry {
+			for _, pr := range added {
+				fmt.Printf("%s [dry-run] would clone: %s\n", icAdd, pr.Name)
+			}
+		} else {
+			_ = runWithSpinner(title, func() error {
+				for _, pr := range added {
+					dest := filepath.Join(rootDir, pr.Name)
+
+					// find full project to get URLs
+					var full glProject
+					for _, p := range projects {
+						if p.Name == pr.Name {
+							full = p
+							break
+						}
+					}
+					url := full.SSHURLToRepo
+					if syncProto == "https" {
+						url = full.HTTPURLToRepo
+					}
+
+					res := cloneOneRepo(url, dest, pr.Name)
+					if res.Err != nil {
+						badList = append(badList, res)
+					} else {
+						okList = append(okList, res)
+					}
 				}
-			}
-			url := full.SSHURLToRepo
-			if syncProto == "https" {
-				url = full.HTTPURLToRepo
-			}
+				return nil
+			})
 
-			clone := exec.Command("git", "clone", "--quiet", url, dest)
-			if err := clone.Run(); err != nil {
-				fmt.Printf("❌ clone failed: %s (%v)\n", name, err)
-				continue
-			}
-			fmt.Printf("✅ cloned %s\n", name)
+			printCloneSummary(okList, badList)
 		}
 	}
 
@@ -265,29 +280,29 @@ func syncSubgroup(rootDir, metaPath string) error {
 			dest := filepath.Join(rootDir, name)
 			if syncClean {
 				if syncDry {
-					fmt.Printf("🗑️  [dry-run] would remove: %s\n", dest)
+					fmt.Printf("%s  [dry-run] would remove: %s\n", icRemove, dest)
 				} else {
-					fmt.Printf("🗑️  Remove: %s\n", dest)
+					fmt.Printf("%s  Remove: %s\n", icRemove, dest)
 					if err := os.RemoveAll(dest); err != nil {
 						return fmt.Errorf("remove repo dir %q: %w", dest, err)
 					}
 				}
 			} else {
-				fmt.Printf("⚠️  Missing on GitLab: %s (use --clean to remove)\n", dest)
+				fmt.Printf("%s  Missing on GitLab: %s (use --clean to remove)\n", icWarn, dest)
 			}
 		}
 	}
 
 	// Update subgroup.json with fresh projects
 	if syncDry {
-		fmt.Println("✨ [dry-run] would update .ash/subgroup.json with latest projects")
+		fmt.Printf("%s [dry-run] would update .ash/subgroup.json with latest projects", icInfo)
 		return nil
 	}
 	meta.Projects = newProjects
 	if err := writeSubgroupJSON(filepath.Join(rootDir, ".ash"), meta); err != nil {
 		return fmt.Errorf("write subgroup.json failed: %w", err)
 	}
-	fmt.Println("✨ Updated .ash/subgroup.json successfully")
+	fmt.Printf("%s Updated .ash/subgroup.json successfully", icInfo)
 	return nil
 }
 

@@ -82,7 +82,7 @@ func fetchAndSaveGroups() error {
 		return fmt.Errorf("failed to write config file: %w", err)
 	}
 
-	fmt.Printf(" Saved %d groups to %s\n", len(groups), configPath)
+	fmt.Printf("%s Saved %d groups to %s\n", icOk, len(groups), configPath)
 	return nil
 }
 
