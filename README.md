@@ -31,7 +31,7 @@ glab --version
 #### Bước 3. Cài **Go**
 
 ```powershell
-winget install --id GoLang.Go -e
+winget install -e --id GoLang.Go
 ```
 
 > Kiểm tra:
