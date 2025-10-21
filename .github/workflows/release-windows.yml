@@ -1,0 +1,64 @@
+name: release-windows
+
+on:
+  push:
+    tags:
+      - "v1.0.0"
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+
+      - name: Build Windows binary (amd64)
+        run: |
+          mkdir dist
+          setx CGO_ENABLED 0
+          go build -trimpath -ldflags "-s -w" -o dist/ash-windows-amd64.exe .
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Build installer (Inno Setup)
+        run: >
+          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          packaging\innosetup\installer.iss
+          /DMyAppVersion=${{ github.ref_name }}
+          /DInputExe=ash-windows-amd64.exe
+          /DOutputDir=..\..\dist
+
+      - name: Compute SHA256
+        shell: pwsh
+        run: |
+          $h = Get-FileHash -Algorithm SHA256 dist\ash-installer.exe
+          $line = "$($h.Hash)  ash-installer.exe"
+          $line | Out-File -Encoding ASCII dist\ash-installer.exe.sha256
+          Write-Host $line
+
+      - name: Upload artifacts (CI)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ash-windows
+          path: |
+            dist/ash-windows-amd64.exe
+            dist/ash-installer.exe
+            dist/ash-installer.exe.sha256
+
+      - name: Create GitHub Release (attach binaries)
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/ash-windows-amd64.exe
+            dist/ash-installer.exe
+            dist/ash-installer.exe.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
