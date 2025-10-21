@@ -18,7 +18,7 @@ winget install --id=Git.Git -e
 #### Bước 2. Cài **glab (GitLab CLI)**
 
 ```powershell
-winget install --id=GLab.GLab -e
+winget install -e --id GLab.GLab
 ```
 
 Sau khi cài xong, mở lại terminal (PowerShell hoặc Windows Terminal) và kiểm tra:
