@@ -12,13 +12,13 @@ Viết bằng **Go + Cobra**, log tiếng Anh gọn, icon kiểu **Nerd-Font**.
 #### Bước 1. Cài **Git**
 
 ```powershell
-winget install --id Git.Git -e
+winget install --id=Git.Git -e
 ```
 
 #### Bước 2. Cài **glab (GitLab CLI)**
 
 ```powershell
-winget install --id GitLab.cli -e
+winget install --id=GLab.GLab -e
 ```
 
 > Nếu Windows chưa có `winget`, tải glab thủ công tại:  
