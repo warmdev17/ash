@@ -20,7 +20,7 @@ jobs:
           go-version: "1.23.x"
       - name: Build Windows binary (amd64)
         run: |
-          mkdir dist
+          mkdir dist -Force
           setx CGO_ENABLED 0
           go build -trimpath -ldflags "-s -w" -o dist/ash-windows-amd64.exe .
       - name: Install Inno Setup
