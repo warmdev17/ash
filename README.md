@@ -21,9 +21,6 @@ winget install --id=Git.Git -e
 winget install --id=GLab.GLab -e
 ```
 
-> Nếu Windows chưa có `winget`, tải glab thủ công tại:  
-> 👉 [https://gitlab.com/gitlab-org/cli/-/releases](https://gitlab.com/gitlab-org/cli/-/releases)
-
 Sau khi cài xong, mở lại terminal (PowerShell hoặc Windows Terminal) và kiểm tra:
 
 ```powershell
