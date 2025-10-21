@@ -34,7 +34,6 @@ DisableProgramGroupPage=yes
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
-SilentInstall=Yes
 DisableStartupPrompt=yes
 
 [Files]
