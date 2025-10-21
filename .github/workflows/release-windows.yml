@@ -1,51 +1,82 @@
+
 name: release-windows
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch: {}           
   push:
     tags:
-      - "v1.0.0"
+      - "v1.0.1"                  
   release:
-    types: [published]
+    types: [published]            
 
 jobs:
   build-windows:
     runs-on: windows-latest
     permissions:
-      contents: write
+      contents: write             
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
           go-version: "1.23.x"
-      - name: Build Windows binary (amd64)
+
+      - name: Derive VERSION from ref (strip leading v)
+        shell: pwsh
         run: |
-          mkdir dist -Force
-          setx CGO_ENABLED 0
+          $v = "${{ github.ref_name }}" -replace '^v',''
+          if (-not $v) { $v = "0.0.0-dev" }
+          "VERSION=$v" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "VERSION=$v"
+
+      - name: Build Windows binary (amd64)
+        shell: pwsh
+        run: |
+          if (Test-Path dist) { Remove-Item -Recurse -Force dist }
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
+          $env:CGO_ENABLED = "0"
+          go version
           go build -trimpath -ldflags "-s -w" -o dist/ash-windows-amd64.exe .
+          Get-ChildItem dist
+
       - name: Install Inno Setup
         run: choco install innosetup -y
+
       - name: Build installer (Inno Setup)
-        run: >
-          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
-          packaging\innosetup\installer.iss
-          /DMyAppVersion=${{ github.ref_name }}
-          /DInputExe=ash-windows-amd64.exe
-          /DOutputDir=..\..\dist
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+            "packaging\innosetup\installer.iss" `
+            /DMyAppVersion=$env:VERSION `
+            /DInputExe=ash-windows-amd64.exe `
+            '/DOutputDir=..\..\dist'
+          Get-ChildItem dist
+
       - name: Verify & SHA256
         shell: pwsh
         run: |
-          if (-Not (Test-Path dist\ash-installer.exe)) { throw "ash-installer.exe not found" }
+          if (-Not (Test-Path dist\ash-installer.exe)) {
+            throw "ash-installer.exe not found in dist/"
+          }
           $h = Get-FileHash -Algorithm SHA256 dist\ash-installer.exe
-          "$($h.Hash)  ash-installer.exe" | Out-File -Encoding ASCII dist\ash-installer.exe.sha256
-      - uses: actions/upload-artifact@v4
+          $line = "$($h.Hash)  ash-installer.exe"
+          $line | Out-File -Encoding ASCII dist\ash-installer.exe.sha256
+          Write-Host "SHA256: $line"
+          Get-ChildItem dist
+
+      - name: Upload artifacts (CI)
+        uses: actions/upload-artifact@v4
         with:
           name: ash-windows
           path: |
             dist/ash-windows-amd64.exe
             dist/ash-installer.exe
             dist/ash-installer.exe.sha256
+
       - name: Create/Update GitHub Release and Upload Assets
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
@@ -56,3 +87,4 @@ jobs:
             dist/ash-installer.exe.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
