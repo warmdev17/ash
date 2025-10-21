@@ -62,5 +62,5 @@ begin
   if Pos(';' + UpperCase(AppDir) + ';', ';' + UpperCase(OrigPath) + ';') > 0 then
     Result := False
   else
-    Result := True;
+    Result := True
   end
