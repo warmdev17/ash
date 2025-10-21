@@ -34,6 +34,7 @@ DisableProgramGroupPage=yes
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
+SilentInstall=Yes
 DisableStartupPrompt=yes
 
 [Files]
@@ -55,12 +56,17 @@ function NeedsAddPath(AppDir: string): Boolean;
 var
   OrigPath: string;
 begin
-  if not RegQueryStringValue(HKLM, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', OrigPath) then
+  if not RegQueryStringValue(HKLM,
+    'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
+    'Path', OrigPath) then
   begin
-    Result := True; exit;
+    Result := True;
+    exit;
   end;
+
   if Pos(';' + UpperCase(AppDir) + ';', ';' + UpperCase(OrigPath) + ';') > 0 then
     Result := False
   else
-    Result := True
-  end
+    Result := True;
+
+end;
