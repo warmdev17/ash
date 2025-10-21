@@ -1,9 +1,12 @@
 name: release-windows
 
 on:
+  workflow_dispatch: {}
   push:
     tags:
       - "v1.0.0"
+  release:
+    types: [published]
 
 jobs:
   build-windows:
@@ -11,23 +14,17 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: "1.23.x"
-
       - name: Build Windows binary (amd64)
         run: |
           mkdir dist
           setx CGO_ENABLED 0
           go build -trimpath -ldflags "-s -w" -o dist/ash-windows-amd64.exe .
-
       - name: Install Inno Setup
         run: choco install innosetup -y
-
       - name: Build installer (Inno Setup)
         run: >
           "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
@@ -35,27 +32,24 @@ jobs:
           /DMyAppVersion=${{ github.ref_name }}
           /DInputExe=ash-windows-amd64.exe
           /DOutputDir=..\..\dist
-
-      - name: Compute SHA256
+      - name: Verify & SHA256
         shell: pwsh
         run: |
+          if (-Not (Test-Path dist\ash-installer.exe)) { throw "ash-installer.exe not found" }
           $h = Get-FileHash -Algorithm SHA256 dist\ash-installer.exe
-          $line = "$($h.Hash)  ash-installer.exe"
-          $line | Out-File -Encoding ASCII dist\ash-installer.exe.sha256
-          Write-Host $line
-
-      - name: Upload artifacts (CI)
-        uses: actions/upload-artifact@v4
+          "$($h.Hash)  ash-installer.exe" | Out-File -Encoding ASCII dist\ash-installer.exe.sha256
+      - uses: actions/upload-artifact@v4
         with:
           name: ash-windows
           path: |
             dist/ash-windows-amd64.exe
             dist/ash-installer.exe
             dist/ash-installer.exe.sha256
-
-      - name: Create GitHub Release (attach binaries)
+      - name: Create/Update GitHub Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
           files: |
             dist/ash-windows-amd64.exe
             dist/ash-installer.exe
