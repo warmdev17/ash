@@ -331,7 +331,6 @@ func cloneGroupHierarchy(group groupIdent, rootDir, proto string, isRoot bool) e
 	}
 
 	// 2) Clone projects at this level (both root and subgroups may have projects)
-	// 2) Clone projects at this level (both root and subgroups may have projects)
 	if len(projects) > 0 {
 		// Batch clone with spinner (no noisy per-repo logs)
 		title := fmt.Sprintf("Cloning %d project(s) in %s …", len(projects), rootDir)
