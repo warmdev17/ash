@@ -10,7 +10,7 @@ Built with **Go** and powered by the **Cobra framework**, ASH is fast, lightweig
 
 ### 🪟 Windows (via **winget**)
 
-Once the package is published, you can install **ASH** directly using the Windows Package Manager:
+You can install **ASH** directly using the Windows Package Manager:
 
 ```bash
 winget install warmdev.ash
