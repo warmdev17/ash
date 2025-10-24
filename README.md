@@ -19,7 +19,7 @@ winget install warmdev.ash
 To verify the installation:
 
 ```bash
-ash --version
+ash --help
 ```
 
 ### 🍎 macOS (via **Homebrew**) — _coming soon_
@@ -44,7 +44,7 @@ sudo mv ash /usr/local/bin/
 You can then verify the installation with:
 
 ```bash
-ash --version
+ash --help
 ```
 
 ---
