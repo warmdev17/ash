@@ -1,3 +1,4 @@
 # Ignore ash binary
 ash
 github-recovery-code*
+node_modules/
