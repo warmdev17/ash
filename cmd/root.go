@@ -33,7 +33,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/ash/config.json)")
+	rootCmd.Flags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/ash/config.json)")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
