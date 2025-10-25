@@ -1,6 +1,3 @@
-/*
-Copyright © 2025 warmdev warmdevofficial@gmail.com
-*/
 package cmd
 
 import (
@@ -11,18 +8,21 @@ import (
 	"github.com/spf13/viper"
 )
 
+var version = "v1.0.5" // will be overridden by -ldflags
+
 var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "ash",
-	Short: "Submit your homework quickly and efficiently",
-	Long:  `A CLI tool to automate GitLab-based homework submission and workflow management.`,
+	Use:     "ash",
+	Short:   "Submit your homework quickly and efficiently",
+	Long:    `A CLI tool to automate GitLab-based homework submission and workflow management.`,
+	Version: version,
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// It also prints any error manually when SilenceErrors = true.
 func Execute() {
+	rootCmd.SetVersionTemplate("{{.Name}} {{.Version}}\n")
+
 	err := rootCmd.Execute()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
@@ -33,7 +33,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.ash.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/ash/config.json)")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
@@ -46,8 +46,8 @@ func initConfig() {
 		cobra.CheckErr(err)
 
 		viper.AddConfigPath(home)
-		viper.SetConfigType("yaml")
-		viper.SetConfigName(".ash")
+		viper.SetConfigType("json")
+		viper.SetConfigName("ash")
 	}
 
 	viper.AutomaticEnv()

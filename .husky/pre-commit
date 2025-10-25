@@ -1,0 +1,4 @@
+# Add your checks here (optional)
+# Example for Go projects:
+# go fmt ./... && go vet ./... || exit 1
+exit 0
