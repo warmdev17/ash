@@ -60,7 +60,7 @@ Examples:
 		status.Stderr = os.Stderr
 
 		// --- Set default host to git.rikkei.edu.vn ---
-		defaultHost := exec.Command("glab", "config", "set", "-g", "host", "git.rikkei.edu.vn")
+		defaultHost := exec.Command("glab", "config", "set", "-g", "host", Host)
 		defaultHost.Stdout = os.Stdout
 		defaultHost.Stderr = os.Stderr
 

@@ -163,31 +163,3 @@ func scaffoldAndLinkSubgroup(wd string, meta *rootGroupMeta, sgID int64, sgName,
 	fmt.Println("Done.")
 	return nil
 }
-
-// findSubgroupByPath returns (true, glGroup, nil) if a subgroup with the given slug/path exists under parentID.
-func findSubgroupByPath(parentID int64, slug string) (bool, glGroup, error) {
-	sgs, err := apiListSubgroups(parentID)
-	if err != nil {
-		return false, glGroup{}, err
-	}
-	for _, sg := range sgs {
-		// match by Path (slug); Name can vary in case/spacing
-		if strings.EqualFold(sg.Path, slug) {
-			return true, sg, nil
-		}
-	}
-	return false, glGroup{}, nil
-}
-
-func fileExists(p string) bool {
-	_, err := os.Stat(p)
-	return err == nil
-}
-
-func readJSON(path string, v any) error {
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(b, v)
-}
