@@ -6,8 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
-	"strings"
 	"sync"
 
 	"github.com/charmbracelet/huh"
@@ -15,202 +13,143 @@ import (
 )
 
 var (
-	submitAll   bool
-	submitRange string
-	submitMsg   string
+	submitAll bool
+	submitMsg string
 )
 
 var submitCmd = &cobra.Command{
-	Use:   "submit",
-	Short: "Commit and push assignments in the current subgroup",
-	Long: `Run inside a subgroup directory (one that has .ash/subgroup.json).
-
-Examples:
-  ash submit --all -m "Submit Session01 Baitap#"
-  ash submit -r 3,5,7 -c "Fix Baitap#"
-  ash submit (Interactive Mode)`,
-	SilenceUsage:  true,
-	SilenceErrors: true,
-
+	Use:   "submit [folder...]",
+	Short: "Submit assignments",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// 1. Validate Flags
-		if strings.TrimSpace(submitMsg) == "" {
-			return errors.New("missing commit message: use -m or -c to provide message")
-		}
-		if submitAll && strings.TrimSpace(submitRange) != "" {
-			return errors.New("use either --all or -r, not both")
-		}
-
-		// 2. Check Environment (Inside Subgroup?)
 		wd, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("failed to get current directory: %w", err)
+			return err
 		}
-		ashDir := filepath.Join(wd, ".ash")
-		subMetaPath := filepath.Join(ashDir, "subgroup.json")
+		subMetaPath := filepath.Join(wd, ".ash", "subgroup.json")
 		if !fileExists(subMetaPath) {
-			return errors.New("not inside a subgroup: .ash/subgroup.json not found")
+			return errors.New("not in a subgroup folder")
 		}
 
-		// 3. Read Metadata
 		var meta subgroupMeta
-		if err := readJSON(subMetaPath, &meta); err != nil {
-			return fmt.Errorf("failed to read subgroup.json: %w", err)
+		readJSON(subMetaPath, &meta)
+		projectMap := make(map[string]projectIdent)
+		for _, p := range meta.Projects {
+			projectMap[p.Name] = p
 		}
-		projects := meta.Projects
 
-		// 4. Select Projects
-		selectedProjects := []projectIdent{}
+		// 1. SELECT TARGETS
+		var targets []projectIdent
 
-		if submitAll {
-			selectedProjects = projects
-		} else if len(submitRange) > 0 {
-			nums := parseNumList(submitRange)
-			if len(nums) == 0 {
-				return errors.New("no valid numbers found in -r (example: -r 1,3,5)")
-			}
-			for _, p := range projects {
-				if n := trailingDigits(p.Name); n != "" {
-					if _, ok := nums[n]; ok {
-						selectedProjects = append(selectedProjects, p)
+		if len(args) > 0 {
+			// Select by name args
+			for _, name := range args {
+				if p, ok := projectMap[name]; ok {
+					targets = append(targets, p)
+				} else {
+					// Fallback if local folder exists but not in meta
+					if fileExists(filepath.Join(wd, name)) {
+						targets = append(targets, projectIdent{Name: name})
 					}
 				}
 			}
-			if len(selectedProjects) == 0 {
-				return fmt.Errorf("no repositories matched numbers: %q", submitRange)
-			}
+		} else if submitAll {
+			targets = meta.Projects
 		} else {
-			// Interactive Mode
+			// Interactive UI
 			options := []huh.Option[string]{}
-			projectMap := make(map[string]projectIdent)
-
-			for _, p := range projects {
+			for _, p := range meta.Projects {
 				options = append(options, huh.NewOption(p.Name, p.Name))
-				projectMap[p.Name] = p
 			}
-
-			var selectedNames []string
+			var selected []string
 			form := huh.NewForm(
 				huh.NewGroup(
 					huh.NewMultiSelect[string]().
-						Title("Select assignments to submit (Space to select, Enter to confirm):").
+						Title("Select assignments to submit:").
 						Options(options...).
-						Value(&selectedNames),
+						Value(&selected),
 				),
 			)
-
-			err := form.Run()
-			if err != nil {
-				return err
-			}
-			if len(selectedNames) == 0 {
-				fmt.Println("No projects selected. Aborting.")
+			if err := form.Run(); err != nil {
 				return nil
-			}
-
-			for _, name := range selectedNames {
-				selectedProjects = append(selectedProjects, projectMap[name])
+			} // Cancelled
+			for _, s := range selected {
+				targets = append(targets, projectMap[s])
 			}
 		}
 
-		// 5. Concurrent Submission
-		fmt.Printf("\nProcessing %d repositories...\n", len(selectedProjects))
-
-		var wg sync.WaitGroup
-		results := make(chan string, len(selectedProjects))
-		sem := make(chan struct{}, 5) // Max 5 concurrent processes
-
-		for _, p := range selectedProjects {
-			wg.Add(1)
-			go func(proj projectIdent) {
-				defer wg.Done()
-				sem <- struct{}{}
-				defer func() { <-sem }()
-
-				resMsg := processRepo(wd, proj, submitMsg)
-				results <- resMsg
-			}(p)
+		if len(targets) == 0 {
+			fmt.Printf("%s[INFO] No projects selected.%s\n", Yellow, Reset)
+			return nil
 		}
 
-		go func() {
+		// 2. MESSAGE INPUT
+		finalMsg := submitMsg
+		if finalMsg == "" {
+			huh.NewInput().Title("Commit Message").Value(&finalMsg).Run()
+		}
+		if finalMsg == "" {
+			finalMsg = "Update assignment"
+		}
+
+		// 3. EXECUTE
+		var results []TaskResult
+		var mu sync.Mutex
+
+		title := fmt.Sprintf("Submitting %d project(s)...", len(targets))
+		err = RunWithSpinner(title, func() error {
+			var wg sync.WaitGroup
+			for _, p := range targets {
+				wg.Add(1)
+				go func(proj projectIdent) {
+					defer wg.Done()
+					res := submitOneRepo(wd, proj.Name, finalMsg)
+					mu.Lock()
+					results = append(results, res)
+					mu.Unlock()
+				}(p)
+			}
 			wg.Wait()
-			close(results)
-		}()
-
-		for msg := range results {
-			fmt.Print(msg)
+			return nil
+		})
+		if err != nil {
+			return err
 		}
-
-		fmt.Println("All done.")
+		PrintResults(results)
 		return nil
 	},
 }
 
-func processRepo(wd string, p projectIdent, msgTemplate string) string {
-	repoDir := filepath.Join(wd, p.Name)
-
-	if _, err := os.Stat(repoDir); err != nil {
-		return fmt.Sprintf("[%s] Skip: not found\n", p.Name)
+func submitOneRepo(wd, name, msg string) TaskResult {
+	dir := filepath.Join(wd, name)
+	if !fileExists(dir) {
+		return TaskResult{Name: name, Status: "ERR", Message: "Folder missing"}
 	}
-	if _, err := os.Stat(filepath.Join(repoDir, ".git")); err != nil {
-		return fmt.Sprintf("[%s] Skip: not a git repo\n", p.Name)
-	}
-
-	st := exec.Command("git", "-C", repoDir, "status", "--porcelain")
-	out, _ := st.Output()
-	if len(out) == 0 {
-		return fmt.Sprintf("[%s] Clean: no changes\n", p.Name)
+	if !fileExists(filepath.Join(dir, ".git")) {
+		return TaskResult{Name: name, Status: "ERR", Message: "Not a git repo"}
 	}
 
-	if err := exec.Command("git", "-C", repoDir, "add", "-A").Run(); err != nil {
-		return fmt.Sprintf("[%s] Error: Add failed (%v)\n", p.Name, err)
+	// 1. Add
+	exec.Command("git", "-C", dir, "add", ".").Run()
+
+	// 2. Check status
+	out, _ := exec.Command("git", "-C", dir, "status", "--porcelain").Output()
+	if len(out) > 0 {
+		// Commit
+		if err := exec.Command("git", "-C", dir, "commit", "-m", msg).Run(); err != nil {
+			return TaskResult{Name: name, Status: "ERR", Message: "Commit failed"}
+		}
 	}
 
-	msg := msgTemplate
-	num := trailingDigits(p.Name)
-	if strings.Contains(msg, "#") {
-		msg = strings.ReplaceAll(msg, "#", num)
+	// 3. Push
+	if err := exec.Command("git", "-C", dir, "push", "--quiet").Run(); err != nil {
+		return TaskResult{Name: name, Status: "ERR", Message: "Push failed"}
 	}
 
-	commit := exec.Command("git", "-C", repoDir, "commit", "-m", msg)
-	if err := commit.Run(); err != nil {
-		return fmt.Sprintf("[%s] Error: Commit failed (%v)\n", p.Name, err)
-	}
-
-	push := exec.Command("git", "-C", repoDir, "push", "--quiet")
-	if err := push.Run(); err != nil {
-		return fmt.Sprintf("[%s] Error: Push failed (%v)\n", p.Name, err)
-	}
-
-	return fmt.Sprintf("[%s] Submitted successfully\n", p.Name)
+	return TaskResult{Name: name, Status: "OK", Message: "Submitted"}
 }
 
 func init() {
 	rootCmd.AddCommand(submitCmd)
-	submitCmd.Flags().BoolVar(&submitAll, "all", false, "Submit all repositories with changes")
-	submitCmd.Flags().StringVarP(&submitRange, "repos", "r", "", "Submit only specific repo numbers (comma separated)")
-	submitCmd.Flags().StringVarP(&submitMsg, "message", "m", "", "Commit message template (use '#' to insert repo number)")
-	submitCmd.Flags().StringVarP(&submitMsg, "commit", "c", "", "Alias for --message")
-}
-
-func trailingDigits(s string) string {
-	rx := regexp.MustCompile(`(\d+)$`)
-	m := rx.FindStringSubmatch(strings.TrimSpace(s))
-	if len(m) == 2 {
-		return m[1]
-	}
-	return ""
-}
-
-func parseNumList(s string) map[string]struct{} {
-	res := map[string]struct{}{}
-	rx := regexp.MustCompile(`^\d+$`)
-
-	for part := range strings.SplitSeq(s, ",") {
-		part = strings.TrimSpace(part)
-		if rx.MatchString(part) {
-			res[part] = struct{}{}
-		}
-	}
-	return res
+	submitCmd.Flags().BoolVar(&submitAll, "all", false, "Submit all")
+	submitCmd.Flags().StringVarP(&submitMsg, "message", "m", "", "Commit message")
 }
