@@ -2,8 +2,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -11,9 +9,6 @@ import (
 var authCmd = &cobra.Command{
 	Use:   "auth",
 	Short: "Authenticate and manage login sesssions",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("auth called")
-	},
 }
 
 func init() {
