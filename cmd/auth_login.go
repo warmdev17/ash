@@ -68,6 +68,11 @@ Examples:
 			return fmt.Errorf("auth status check failed: %w", err)
 		}
 
+		if err := defaultHost.Run(); err != nil {
+			return fmt.Errorf("failed to set default host: %w", err)
+		}
+		fmt.Printf("%s Default GitLab host set to %s\n", icOk, Host)
+
 		return nil
 	},
 }
