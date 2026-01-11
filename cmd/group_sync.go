@@ -209,8 +209,8 @@ func init() {
 	groupSyncCmd.Flags().BoolVar(&groupSyncClean, "clean", false, "Delete local folders of removed subgroups")
 }
 
-// syncSubgroupContent thực hiện logic sync cho 1 subgroup (fetch projects -> clone/pull)
-// Hàm này sẽ được dùng chung bởi `ash group sync` và `ash subgroup sync`
+// syncSubgroupContent executes sync logic for one subgroup (fetch projects -> clone/pull)
+// This function is shared by `ash group sync` and `ash subgroup sync`
 func syncSubgroupContent(wd string, subgroupID int64, clean bool) error {
 	// 1. Fetch Projects
 	prjs, err := apiListProjects(subgroupID)
