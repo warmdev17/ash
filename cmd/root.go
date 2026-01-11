@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var version = "v2.0.1" // will be overridden by -ldflags
+var version = "v2.0.2" // will be overridden by -ldflags
 
 var cfgFile string
 
