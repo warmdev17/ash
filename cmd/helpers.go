@@ -24,9 +24,9 @@ var (
 // --- TASK RESULTS ---
 
 type TaskResult struct {
-	Name    string // Tên đối tượng (Baitap1)
+	Name    string // Object Name (e.g. Exercise1)
 	Status  string // OK, ERR, NEW, SKIP
-	Message string // Chi tiết (Cloned, Push failed...)
+	Message string // Details (Cloned, Push failed...)
 }
 
 func PrintResults(results []TaskResult) {
@@ -83,7 +83,7 @@ func writeJSON(path string, v any) error {
 	return os.WriteFile(path, b, 0o644)
 }
 
-// Hàm wrapper cụ thể cho write group/subgroup json để tương thích code cũ
+// Specific wrapper for writing group/subgroup json to match legacy code
 func writeGroupJSON(ashDir string, meta rootGroupMeta) error {
 	return writeJSON(filepath.Join(ashDir, "group.json"), meta)
 }
@@ -147,7 +147,7 @@ func findGroupByName(cfg AshConfig, name string) (GitLabGroup, bool) {
 	return GitLabGroup{}, false
 }
 
-// scaffoldLocalGroup tạo thư mục và file .ash/group.json cơ bản
+// scaffoldLocalGroup creates directory and basic .ash/group.json
 func scaffoldLocalGroup(dir string, g GitLabGroup) error {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return fmt.Errorf("failed to create directory %q: %w", dir, err)
@@ -195,7 +195,7 @@ func apiListSubgroups(groupID int64) ([]glGroup, error) {
 	return sgs, nil
 }
 
-// cloneGroupHierarchy đệ quy clone toàn bộ group/subgroup
+// cloneGroupHierarchy recursively clones the entire group/subgroup hierarchy
 func cloneGroupHierarchy(group groupIdent, rootDir, proto string, isRoot bool) error {
 	// 1. Fetch data
 	subgroups, err := apiListSubgroups(group.ID)
