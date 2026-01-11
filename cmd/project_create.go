@@ -66,7 +66,7 @@ Examples:
 
 		title := fmt.Sprintf("Creating %d project(s)...", len(names))
 
-		err = RunWithSpinner(title, func() error {
+		err = RunSpinner(title, func() error {
 			for _, rawName := range names {
 				display := strings.TrimSpace(rawName)
 				if display == "" {

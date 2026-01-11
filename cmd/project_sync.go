@@ -5,92 +5,99 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/spf13/cobra"
 )
 
 var projectSyncCmd = &cobra.Command{
-	Use:   "sync",
-	Short: "Sync all projects (Clone/Pull)",
+	Use:   "sync [name...]",
+	Short: "Sync (git pull) project code",
+	Long: `Sync code for projects.
+If no arguments provided: Syncs ALL projects in the current subgroup.
+If arguments provided: Syncs only the specified projects.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		wd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		subMetaPath := filepath.Join(wd, ".ash", "subgroup.json")
-		if !fileExists(subMetaPath) {
-			return fmt.Errorf("not in a subgroup folder")
-		}
+		wd, _ := os.Getwd()
 
-		var meta subgroupMeta
-		if err := readJSON(subMetaPath, &meta); err != nil {
-			return err
-		}
+		// Check context
+		inSubgroup := fileExists(filepath.Join(wd, ".ash", "subgroup.json"))
 
-		if len(meta.Projects) == 0 {
-			fmt.Printf("%s[INFO] No projects found in metadata.%s\n", Cyan, Reset)
-			return nil
-		}
+		var targets []string // Folders to sync
 
-		// EXECUTE
-		var results []TaskResult
-		var mu sync.Mutex
-
-		title := fmt.Sprintf("Syncing %d project(s)...", len(meta.Projects))
-
-		err = RunWithSpinner(title, func() error {
-			var wg sync.WaitGroup
-			sem := make(chan struct{}, 5) // Limit 5 concurrent threads
-
-			for _, p := range meta.Projects {
-				wg.Add(1)
-				go func(proj projectIdent) {
-					defer wg.Done()
-					sem <- struct{}{}
-					defer func() { <-sem }()
-
-					res := syncOneProject(wd, proj)
-
-					mu.Lock()
-					results = append(results, res)
-					mu.Unlock()
-				}(p)
+		if len(args) > 0 {
+			targets = args
+		} else {
+			if inSubgroup {
+				// Scan all folders in subgroup that look like git repos
+				entries, _ := os.ReadDir(wd)
+				for _, e := range entries {
+					if e.IsDir() && !strings.HasPrefix(e.Name(), ".") {
+						if fileExists(filepath.Join(wd, e.Name(), ".git")) {
+							targets = append(targets, e.Name())
+						}
+					}
+				}
+			} else {
+				// Maybe we are INSIDE a project?
+				if fileExists(filepath.Join(wd, ".git")) {
+					// Sync current
+					targets = []string{"."}
+				} else {
+					return fmt.Errorf("not in a subgroup or project folder")
+				}
 			}
-			wg.Wait()
-			return nil
-		})
-		if err != nil {
-			return err
 		}
-		PrintResults(results)
+
+		if len(targets) == 0 {
+			fmt.Println("No projects to sync.")
+			return nil
+		}
+
+		fmt.Printf("Syncing %d projects (git pull)...\n", len(targets))
+
+		// Concurrent Pull
+		var wg sync.WaitGroup
+		sem := make(chan struct{}, 5)
+
+		for _, t := range targets {
+			wg.Add(1)
+			go func(dirName string) {
+				defer wg.Done()
+				sem <- struct{}{}
+				defer func() { <-sem }()
+
+				targetDir := dirName
+				if dirName != "." {
+					targetDir = filepath.Join(wd, dirName)
+				}
+
+				if !fileExists(filepath.Join(targetDir, ".git")) {
+					fmt.Printf("%s[SKIP] %s is not a git repo%s\n", Yellow, dirName, Reset)
+					return
+				}
+
+				// Pull
+				// Remove --quiet to see if "Already up to date" or updates
+				out, err := exec.Command("git", "-C", targetDir, "pull").CombinedOutput()
+				output := string(out)
+				if err != nil {
+					fmt.Printf("%s[ERR] %s pull failed: %v\n%s%s\n", Red, dirName, err, output, Reset)
+				} else {
+					if strings.Contains(output, "Already up to date") {
+						// Clean check, maybe don't print anything or print in gray?
+						// User wants "notification if specific action happened".
+						fmt.Printf("%s[OK] %s is up to date%s\n", Gray, dirName, Reset)
+					} else {
+						// It updated
+						fmt.Printf("%s[UPD] %s updated%s\n", Green, dirName, Reset)
+					}
+				}
+			}(t)
+		}
+		wg.Wait()
 		return nil
 	},
-}
-
-func syncOneProject(wd string, p projectIdent) TaskResult {
-	targetDir := filepath.Join(wd, p.Name)
-
-	// Case 1: Folder missing -> CLONE
-	if !fileExists(targetDir) {
-		// Dùng glab repo clone để nó tự handle auth/url
-		err := exec.Command("glab", "repo", "clone", p.Path, targetDir).Run()
-		if err != nil {
-			return TaskResult{Name: p.Name, Status: "ERR", Message: "Clone failed"}
-		}
-		return TaskResult{Name: p.Name, Status: "NEW", Message: "Cloned"}
-	}
-
-	// Case 2: Folder exists -> PULL
-	if !fileExists(filepath.Join(targetDir, ".git")) {
-		return TaskResult{Name: p.Name, Status: "SKIP", Message: "Not a git repo"}
-	}
-
-	err := exec.Command("git", "-C", targetDir, "pull", "--quiet").Run()
-	if err != nil {
-		return TaskResult{Name: p.Name, Status: "ERR", Message: "Pull failed (Conflict?)"}
-	}
-	return TaskResult{Name: p.Name, Status: "OK", Message: "Updated"}
 }
 
 func init() {
