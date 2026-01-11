@@ -19,7 +19,9 @@ var groupCreateCmd = &cobra.Command{
 
 	RunE: func(cmd *cobra.Command, args []string) error {
 		groupName := args[0]
-		return createNewGroup(groupName, groupName)
+		return RunSpinner(fmt.Sprintf("Creating group %s", groupName), func() error {
+			return createNewGroup(groupName, groupName)
+		})
 	},
 }
 

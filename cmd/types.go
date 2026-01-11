@@ -21,9 +21,10 @@ type glProject struct {
 }
 
 type glGroup struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
-	Path string `json:"path"`
+	ID                  int64  `json:"id"`
+	Name                string `json:"name"`
+	Path                string `json:"path"`
+	MarkedForDeletionOn string `json:"marked_for_deletion_on"`
 }
 
 // ---------- Metadata types ----------
@@ -32,6 +33,7 @@ type glGroup struct {
 type groupIdent struct {
 	ID   int64  `json:"id"`
 	Path string `json:"path"`
+	Name string `json:"name"`
 }
 
 type projectIdent struct {

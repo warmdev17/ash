@@ -37,7 +37,9 @@ var groupCloneCmd = &cobra.Command{
 		if err := scaffoldLocalGroup(groupName, grp); err != nil {
 			return err
 		}
-		return cloneGroupHierarchy(groupIdent{ID: grp.ID, Path: grp.Path}, groupName, proto, true)
+		return RunSpinner(fmt.Sprintf("Cloning hierarchy into %s", groupName), func() error {
+			return cloneGroupHierarchy(groupIdent{ID: grp.ID, Path: grp.Path}, groupName, proto, true)
+		})
 	},
 }
 
