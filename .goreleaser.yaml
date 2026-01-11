@@ -31,6 +31,21 @@ archives:
       - docs/**/*
     name_template: >-
       {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+brews:
+  - name: ash
+    repository:
+      owner: warmdev17
+      name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    url_template: "https://github.com/warmdev17/ash/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    commit_author:
+      name: goreleaserbot
+      email: goreleaser@warmdev17.com
+    homepage: "https://github.com/warmdev17/ash"
+    description: "Ash CLI tool for automated GitLab homework submission"
+    license: "MIT"
+    test: |
+      system "#{bin}/ash --version"
 
 checksum:
   name_template: "checksums.txt"
