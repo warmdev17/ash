@@ -22,20 +22,20 @@ To verify the installation:
 ash -v
 ```
 
-### 🍎 macOS (via **Homebrew**) — _coming soon_
+### 🍎 macOS (via **Homebrew**)
 
-Homebrew support is coming soon! Once available, you’ll be able to install **ASH** with:
+You can install **ASH** directly using the Homebrew:
 
 ```bash
-brew install warmdev/tap/ash
+brew install warmdev17/tap/ash
 ```
 
 ### 🐧 Linux / Build from source
 
-If you’re on Linux or prefer building from source, make sure you have **Go 1.22+** installed, then run:
+If you’re on Linux or prefer building from source, make sure you have **Go 1.25+** installed, then run:
 
 ```bash
-git clone https://github.com/warmdev/ash.git
+git clone https://github.com/warmdev17/ash.git
 cd ash
 go build -o ash .
 sudo mv ash /usr/local/bin/
