@@ -2,3 +2,5 @@
 ash
 github-recovery-code*
 node_modules/
+dist/
+wiki/
