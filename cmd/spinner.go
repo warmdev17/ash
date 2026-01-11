@@ -21,10 +21,10 @@ type CloneResult struct {
 	Stderr   string
 }
 
-// runWithSpinner runs fn while showing a spinner (if stderr is a TTY).
+// RunSpinner runs fn while showing a spinner (if stderr is a TTY).
 // title is displayed while the spinner runs. On success, a green "done" is shown.
 // On failure, a red fail message is shown.
-func runWithSpinner(title string, fn func() error) error {
+func RunSpinner(title string, fn func() error) error {
 	useSpinner := isatty.IsTerminal(os.Stderr.Fd()) || isatty.IsCygwinTerminal(os.Stderr.Fd())
 	if !useSpinner {
 		// No spinner in non-interactive env; just run.

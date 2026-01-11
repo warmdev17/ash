@@ -8,10 +8,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"time"
-
-	"github.com/mattn/go-isatty"
-	"github.com/theckman/yacspin"
 )
 
 // --- COLORS (ANSI) ---
@@ -61,49 +57,6 @@ func PrintResults(results []TaskResult) {
 		fmt.Printf("%s%-7s %-20s : %s%s\n", color, tag, res.Name, res.Message, Reset)
 	}
 	fmt.Println()
-}
-
-// --- SPINNER WRAPPER ---
-
-func RunWithSpinner(title string, fn func() error) error {
-	// Kiểm tra xem có đang chạy trong terminal tương tác không
-	if !isatty.IsTerminal(os.Stdout.Fd()) && !isatty.IsCygwinTerminal(os.Stdout.Fd()) {
-		fmt.Printf("%s...\n", title)
-		return fn()
-	}
-
-	cfg := yacspin.Config{
-		Frequency:       100 * time.Millisecond,
-		CharSet:         yacspin.CharSets[14], // Dots style
-		Suffix:          " " + title,
-		SuffixAutoColon: true,
-		ColorAll:        true,
-		Colors:          []string{"cyan"},
-		StopCharacter:   "✓",
-		StopColors:      []string{"green"},
-		StopMessage:     "Done",
-	}
-
-	spinner, err := yacspin.New(cfg)
-	if err != nil {
-		return fn()
-	}
-
-	if err := spinner.Start(); err != nil {
-		return fn()
-	}
-
-	err = fn()
-	if err != nil {
-		spinner.StopFailMessage("Failed")
-		spinner.StopFailColors("red")
-		spinner.StopFailCharacter("✗")
-		spinner.StopFail()
-		return err
-	}
-
-	spinner.Stop()
-	return nil
 }
 
 // --- FILE / JSON HELPERS ---
@@ -204,7 +157,7 @@ func scaffoldLocalGroup(dir string, g GitLabGroup) error {
 		return fmt.Errorf("failed to create .ash directory: %w", err)
 	}
 	meta := rootGroupMeta{
-		Group:     groupIdent{ID: g.ID, Path: g.Path},
+		Group:     groupIdent{ID: g.ID, Path: g.Path, Name: g.Name},
 		Subgroups: []subgroupIdent{},
 	}
 	if err := writeGroupJSON(ashMeta, meta); err != nil {

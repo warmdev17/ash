@@ -96,7 +96,7 @@ var submitCmd = &cobra.Command{
 		var mu sync.Mutex
 
 		title := fmt.Sprintf("Submitting %d project(s)...", len(targets))
-		err = RunWithSpinner(title, func() error {
+		err = RunSpinner(title, func() error {
 			var wg sync.WaitGroup
 			for _, p := range targets {
 				wg.Add(1)
