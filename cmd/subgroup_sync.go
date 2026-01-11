@@ -1,97 +1,47 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/spf13/cobra"
 )
 
-var (
-	withProjects bool
-	cleanLocal   bool
-)
+var sgSyncClean bool
 
 var subgroupSyncCmd = &cobra.Command{
 	Use:   "sync",
-	Short: "Sync subgroup metadata",
+	Short: "Sync projects in the current subgroup",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		wd, err := os.Getwd()
 		if err != nil {
 			return err
 		}
-		ashDir := filepath.Join(wd, ".ash")
-		groupMetaPath := filepath.Join(ashDir, "group.json")
+		subMetaPath := filepath.Join(wd, ".ash", "subgroup.json")
 
-		if !fileExists(groupMetaPath) {
-			return fmt.Errorf("not in a group root (.ash/group.json missing)")
+		if !fileExists(subMetaPath) {
+			return fmt.Errorf("not in a subgroup folder (.ash/subgroup.json missing)")
 		}
 
-		var meta rootGroupMeta
-		if err := readJSON(groupMetaPath, &meta); err != nil {
+		var meta subgroupMeta
+		if err := readJSON(subMetaPath, &meta); err != nil {
 			return err
 		}
 
-		var newSubs []subgroupIdent
-		var removed []string
+		fmt.Printf("Syncing Subgroup: %s (ID: %d)\n", meta.Group.Name, meta.Group.ID)
 
-		// EXECUTE
-		err = RunWithSpinner("Fetching subgroups from GitLab...", func() error {
-			// 1. API Call (Manual exec to reuse helper if needed, or inline)
-			url := fmt.Sprintf("groups/%d/subgroups?per_page=100", meta.Group.ID)
-			out, err := exec.Command("glab", "api", url, "--paginate").Output()
-			if err != nil {
-				return err
-			}
-
-			var sgs []glGroup
-			if err := json.Unmarshal(out, &sgs); err != nil {
-				return err
-			}
-
-			// 2. Diff Logic
-			newNameSet := make(map[string]bool)
-			for _, sg := range sgs {
-				newSubs = append(newSubs, subgroupIdent{ID: sg.ID, Path: sg.Path, Name: sg.Name})
-				newNameSet[strings.ToLower(sg.Name)] = true
-			}
-
-			for _, old := range meta.Subgroups {
-				if !newNameSet[strings.ToLower(old.Name)] {
-					removed = append(removed, old.Name)
-				}
-			}
-
-			// 3. Write
-			meta.Subgroups = newSubs
-			return writeJSON(groupMetaPath, meta)
-		})
-		if err != nil {
+		// Use the shared helper from group_sync.go
+		if err := syncSubgroupContent(wd, meta.Group.ID, sgSyncClean); err != nil {
 			return err
 		}
 
-		// Report
-		fmt.Printf("%s[OK] Synced %d subgroups.%s\n", Green, len(newSubs), Reset)
-		if len(removed) > 0 {
-			fmt.Printf("%s[INFO] Removed from GitLab: %v%s\n", Yellow, removed, Reset)
-			if cleanLocal {
-				for _, r := range removed {
-					os.RemoveAll(filepath.Join(wd, r))
-					fmt.Printf("%s[DEL] Deleted folder: %s%s\n", Red, r, Reset)
-				}
-			}
-		}
-
+		fmt.Printf("%s[OK] Sync complete.%s\n", Green, Reset)
 		return nil
 	},
 }
 
 func init() {
 	subgroupCmd.AddCommand(subgroupSyncCmd)
-	subgroupSyncCmd.Flags().BoolVar(&withProjects, "with-projects", false, "Sync projects metadata too")
-	subgroupSyncCmd.Flags().BoolVar(&cleanLocal, "clean", false, "Remove local folders of deleted subgroups")
+	subgroupSyncCmd.Flags().BoolVar(&sgSyncClean, "clean", false, "Delete local folders of removed projects")
 }

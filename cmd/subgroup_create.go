@@ -72,33 +72,39 @@ var subgroupCreateCmd = &cobra.Command{
 		if subgroupVisibility == "" {
 			subgroupVisibility = "public"
 		}
-		fmt.Printf("Creating subgroup via glab: name=%q path=%q parent_id=%d visibility=%s\n",
-			name, path, meta.Group.ID, subgroupVisibility)
-
-		argsPost := []string{
-			"api", "-X", "POST", "/groups",
-			"-f", "name=" + name,
-			"-f", "path=" + path,
-			"-f", fmt.Sprintf("parent_id=%d", meta.Group.ID),
-			"-f", "visibility=" + subgroupVisibility, // default public
-		}
-		glabCmd := exec.Command("glab", argsPost...)
-		out, err := glabCmd.CombinedOutput()
-		if err != nil {
-			return fmt.Errorf("glab create subgroup failed: %v\n%s", err, string(out))
-		}
 
 		var created struct {
 			ID   int64  `json:"id"`
 			Name string `json:"name"`
 			Path string `json:"path"`
 		}
-		if err := json.Unmarshal(out, &created); err != nil {
-			return fmt.Errorf("failed to parse glab response: %w", err)
+
+		err = RunSpinner(fmt.Sprintf("Creating subgroup %s", name), func() error {
+			argsPost := []string{
+				"api", "-X", "POST", "/groups",
+				"-f", "name=" + name,
+				"-f", "path=" + path,
+				"-f", fmt.Sprintf("parent_id=%d", meta.Group.ID),
+				"-f", "visibility=" + subgroupVisibility, // default public
+			}
+			glabCmd := exec.Command("glab", argsPost...)
+			out, err := glabCmd.CombinedOutput()
+			if err != nil {
+				return fmt.Errorf("glab create subgroup failed: %v\n%s", err, string(out))
+			}
+
+			if err := json.Unmarshal(out, &created); err != nil {
+				return fmt.Errorf("failed to parse glab response: %w", err)
+			}
+			if created.ID == 0 || created.Path == "" || created.Name == "" {
+				return fmt.Errorf("unexpected glab response: missing id/name/path")
+			}
+			return nil
+		})
+		if err != nil {
+			return err
 		}
-		if created.ID == 0 || created.Path == "" || created.Name == "" {
-			return fmt.Errorf("unexpected glab response: missing id/name/path")
-		}
+
 		fmt.Printf("Created subgroup: id=%d name=%q path=%q\n", created.ID, created.Name, created.Path)
 
 		// 5) Local scaffold + update parent group.json
