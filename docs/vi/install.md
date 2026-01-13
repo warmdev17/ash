@@ -1,21 +1,25 @@
 # Cài đặt
 
-## Yêu cầu
+## Windows
 
-- Git
-- Go (nếu cài đặt từ mã nguồn)
-
-## Cài đặt từ mã nguồn
+Bạn có thể cài đặt **ash** từ **winget**
 
 ```bash
-go install github.com/warmdev17/ash@latest
+winget install warmdev.ash
 ```
 
-## Linux (Homebrew)
-
-Nếu bạn đang sử dụng Linux và đã cài đặt Homebrew:
+Kiểm tra cài đặt:
 
 ```bash
-brew tap warmdev17/ash
-brew install ash
+ash --version
+```
+
+Output:
+
+```text
+ash v2.0.2
+```
+
+```zsh
+brew install warmdev17/tap/ash
 ```
