@@ -6,7 +6,7 @@ Trước khi sử dụng `ash`, hãy đảm bảo bạn đã có GitLab Personal
 
 ### Cách lấy Personal Access Token
 
-1. Truy cập _git.rikkei.edu.vn_
+1. Truy cập [git.rikkei.edu.vn](https://git.rikkei.edu.vn)
 
 ## 1. Xác thực (Authentication)
 
