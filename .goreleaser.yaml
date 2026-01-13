@@ -38,6 +38,9 @@ brews:
       owner: warmdev17
       name: homebrew-tap
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    dependencies:
+      - name: git
+      - name: glab
     url_template: "https://github.com/warmdev17/ash/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     commit_author:
       name: goreleaserbot
