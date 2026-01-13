@@ -4,13 +4,13 @@
 
 Bạn có thể cài đặt **ash** từ **winget**
 
-```bash
+```powershell
 winget install warmdev.ash
 ```
 
 Kiểm tra cài đặt
 
-```bash
+```powershell
 ash --version
 ```
 
@@ -30,7 +30,7 @@ brew install warmdev17/tap/ash
 
 Kiểm tra cài đặt
 
-```bash
+```zsh
 ash --version
 ```
 
