@@ -7,7 +7,7 @@ Trước khi sử dụng `ash`, hãy đảm bảo bạn đã có GitLab Personal
 ### Cách lấy Personal Access Token
 
 1. Truy cập [ACCESS TOKEN](https://git.rikkei.edu.vn/-/user_settings/personal_access_tokens)
-2. Tạo token mới tới tên và mô tả bất kì ( có thể trống ) và ngày hết hạn token là lâu nhất có thể ( tránh phải tạo lại nhiều lần )
+2. Tạo token mới với tên và mô tả bất kì ( có thể trống ) và ngày hết hạn token là lâu nhất có thể ( tránh phải tạo lại nhiều lần )
    ![Hướng dẫn tạo token](./src/img/create_new_access_token.png)
 
 ## 1. Xác thực (Authentication)
@@ -15,7 +15,13 @@ Trước khi sử dụng `ash`, hãy đảm bảo bạn đã có GitLab Personal
 Đầu tiên, đăng nhập vào GitLab:
 
 ```bash
-ash auth login -t <your-token>
+ash auth login -t <token-vừa-tạo>
+```
+
+Nếu dùng ssh
+
+```bash
+ash auth login -t <token-vừa-tạo> -g ssh
 ```
 
 ## 2. Kiểm tra cài đặt
