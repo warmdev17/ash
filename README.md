@@ -11,7 +11,7 @@ Built with **Go** and powered by the **Cobra framework**, ASH is fast, lightweig
 📘 Documentation:
 
 - 🇺🇸 [English docs](./docs/en/)
-- 🇻🇳 [Tài liệu tiếng Việt](./docs/vn/)
+- 🇻🇳 [Tài liệu tiếng Việt](./docs/vi/)
 
 🌍 Languages:
 
