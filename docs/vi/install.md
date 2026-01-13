@@ -2,7 +2,7 @@
 
 ## 🪟 Windows
 
-### Bạn có thể cài đặt **ash** từ **winget**
+Bạn có thể cài đặt **ash** từ **winget**
 
 ```bash
 winget install warmdev.ash
@@ -22,22 +22,17 @@ ash v2.0.2
 
 ## 🍎 macOS
 
-### Bạn có thể cài đặt **ash** từ **Homebrew Tap**
+Bạn có thể cài đặt **ash** từ **Homebrew Tap**
 
 ```zsh
 brew install warmdev17/tap/ash
 ```
 
-### Kiểm tra cài đặt
+Kiểm tra cài đặt
 
 ```bash
 ash --version
-```
-
-Output:
-
-```text
-ash v2.0.2
+#ash v2.0.2
 ```
 
 ## 🐧 Linux
@@ -46,7 +41,7 @@ ash v2.0.2
 
 #### 📋 Yêu cầu
 
-- 🐹 **Go** ≥ 1.25+
+- 🐹 **Go** ≥ 1.25
 - 🌱 **Git**
 - 🦊 **GitLab CLI (`glab`)**
 
