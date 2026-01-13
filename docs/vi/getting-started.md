@@ -4,6 +4,10 @@
 
 Trước khi sử dụng `ash`, hãy đảm bảo bạn đã có GitLab Personal Access Token (PAT) với quyền `api`.
 
+### Cách lấy Personal Access Token
+
+1. Truy cập _git.rikkei.edu.vn_
+
 ## 1. Xác thực (Authentication)
 
 Đầu tiên, đăng nhập vào GitLab:
