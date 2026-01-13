@@ -8,7 +8,7 @@ Bạn có thể cài đặt **ash** từ **winget**
 winget install warmdev.ash
 ```
 
-### Kiểm tra cài đặt
+Kiểm tra cài đặt
 
 ```bash
 ash --version
@@ -32,7 +32,12 @@ Kiểm tra cài đặt
 
 ```bash
 ash --version
-#ash v2.0.2
+```
+
+Output:
+
+```text
+ash v2.0.2
 ```
 
 ## 🐧 Linux
@@ -52,4 +57,16 @@ git clone https://github.com/warmdev17/ash.git
 cd ash
 go build -o ash
 sudo install ash /usr/local/bin
+```
+
+Kiểm tra cài đặt
+
+```bash
+ash --version
+```
+
+Output:
+
+```text
+ash v2.0.2
 ```
