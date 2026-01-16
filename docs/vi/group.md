@@ -23,29 +23,23 @@ ash group list
 Tạo một group mới trong GitLab.
 
 ```bash
-ash group create
+ash group create <tên group>
 ```
-
-**Flags:**
-- `-n, --name string`: Tên của group
-- `-p, --path string`: Đường dẫn của group (slug)
-- `-d, --description string`: Mô tả về group
-- `--visibility string`: Mức độ hiển thị (public, internal, private)
 
 ### delete
 
 Xóa một group hiện có.
 
 ```bash
-ash group delete <group-id-or-path>
+ash group delete <tên group ( theo tên folder ), id hoặc path>
 ```
 
 ### get
 
-Lấy thông tin chi tiết của một group cụ thể.
+Lấy toàn bộ thông tin của các group có trong tài khoản vào config file
 
 ```bash
-ash group get <group-id-or-path>
+ash group get
 ```
 
 ### clone
@@ -53,7 +47,7 @@ ash group get <group-id-or-path>
 Clone một group và tất cả các repository bên trong nó.
 
 ```bash
-ash group clone <group-id-or-path>
+ash group clone <tên hoặc id của group>
 ```
 
 ### sync
