@@ -15,7 +15,7 @@ ash subgroup [command]
 Liệt kê các subgroup của một group cụ thể.
 
 ```bash
-ash subgroup list --group <parent-group-id>
+ash subgroup list
 ```
 
 ### create
@@ -26,17 +26,12 @@ Tạo một subgroup mới.
 ash subgroup create
 ```
 
-**Flags:**
-- `-n, --name string`: Tên của subgroup
-- `-p, --parent string`: ID hoặc đường dẫn của group cha
-- `-s, --slug string`: Đường dẫn/Slug cho subgroup
-
 ### delete
 
 Xóa một subgroup.
 
 ```bash
-ash subgroup delete <subgroup-id-or-path>
+ash subgroup delete <tên hoặc id subgroup>
 ```
 
 ### clone
@@ -44,7 +39,7 @@ ash subgroup delete <subgroup-id-or-path>
 Clone một subgroup và tất cả các repository bên trong nó.
 
 ```bash
-ash subgroup clone <subgroup-id-or-path>
+ash subgroup clone <tên hoặc id subgroup>
 ```
 
 ### sync
@@ -52,5 +47,5 @@ ash subgroup clone <subgroup-id-or-path>
 Đồng bộ tất cả các dự án trong một subgroup.
 
 ```bash
-ash subgroup sync <subgroup-id-or-path>
+ash subgroup sync <tên hoặc id subgroup>
 ```
