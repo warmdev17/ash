@@ -343,6 +343,13 @@ func syncSubgroupContent(wd string, subgroupID int64, clean bool) error {
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, 5)
 
+	// Determine Protocol
+	proto := "https"
+	cfg, _, _ := loadConfig()
+	if cfg.GitProtocol != "" {
+		proto = cfg.GitProtocol
+	}
+
 	for _, p := range newidents {
 		wg.Add(1)
 		go func(proj projectIdent) {
@@ -353,6 +360,9 @@ func syncSubgroupContent(wd string, subgroupID int64, clean bool) error {
 			// Use the remote info for URL
 			remoteP := remoteMap[proj.ID]
 			url := remoteP.HTTPURLToRepo
+			if proto == "ssh" {
+				url = remoteP.SSHURLToRepo
+			}
 
 			targetDir := filepath.Join(wd, proj.Name)
 			if !fileExists(targetDir) {

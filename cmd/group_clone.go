@@ -18,6 +18,14 @@ var groupCloneCmd = &cobra.Command{
 	SilenceErrors: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// Resolve Protocol Default
+		if !cmd.Flags().Changed("git-proto") {
+			cfg, _, _ := loadConfig()
+			if cfg.GitProtocol != "" {
+				proto = cfg.GitProtocol
+			}
+		}
+
 		groupName := args[0]
 
 		cfg, cfgPath, err := loadConfig()

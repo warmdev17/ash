@@ -58,8 +58,20 @@ var projectCloneCmd = &cobra.Command{
 			return fmt.Errorf("folder %s already exists", dest)
 		}
 
+		// Determine Protocol
+		proto := "https"
+		cfg, _, _ := loadConfig()
+		if cfg.GitProtocol != "" {
+			proto = cfg.GitProtocol
+		}
+
+		repoURL := target.HTTPURLToRepo
+		if proto == "ssh" {
+			repoURL = target.SSHURLToRepo
+		}
+
 		err = RunSpinner(fmt.Sprintf("Cloning project %s", target.Name), func() error {
-			if err := exec.Command("git", "clone", "--quiet", target.HTTPURLToRepo, dest).Run(); err != nil {
+			if err := exec.Command("git", "clone", "--quiet", repoURL, dest).Run(); err != nil {
 				return fmt.Errorf("git clone failed: %w", err)
 			}
 			return nil

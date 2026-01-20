@@ -56,9 +56,16 @@ var subgroupCloneCmd = &cobra.Command{
 		targetDir := filepath.Join(wd, sg.Name)
 		os.MkdirAll(targetDir, 0o755)
 
+		// Determine Protocol
+		proto := "https"
+		cfg, _, _ := loadConfig()
+		if cfg.GitProtocol != "" {
+			proto = cfg.GitProtocol
+		}
+
 		// Recurse Clone
 		err = RunSpinner(fmt.Sprintf("Cloning subgroup %s", sg.Name), func() error {
-			if err := cloneGroupHierarchy(groupIdent{ID: sg.ID, Path: sg.Path, Name: sg.Name}, targetDir, "https", false); err != nil {
+			if err := cloneGroupHierarchy(groupIdent{ID: sg.ID, Path: sg.Path, Name: sg.Name}, targetDir, proto, false); err != nil {
 				return err
 			}
 			return nil

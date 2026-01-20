@@ -73,6 +73,24 @@ Examples:
 		}
 		fmt.Printf("%s Default GitLab host set to %s\n", icOk, Host)
 
+		// --- Save Git Protocol Preference ---
+		cfg, cfgPath, err := loadConfig()
+		if err != nil {
+			// If config doesn't exist, we can't save preference easily or should create it.
+			// loadConfig returns empty config if not found, but we might want to ensure dir exists.
+			// Usually loadConfig handles the read, but creation might be needed.
+			// saveConfig handles mkdir.
+		}
+
+		// If loadConfig failed, we might have an empty cfg, which is fine to start with.
+		// We just want to update the protocol.
+		cfg.GitProtocol = GitProto
+		if err := saveConfig(cfgPath, cfg); err != nil {
+			fmt.Printf("%s[WARN] Failed to save git protocol preference: %v%s\n", Yellow, err, Reset)
+		} else {
+			fmt.Printf("%s Saved git protocol preference: %s\n", icOk, GitProto)
+		}
+
 		return nil
 	},
 }

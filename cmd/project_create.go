@@ -30,6 +30,14 @@ Examples:
 	SilenceUsage: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// 0. Resolve Protocol Default from Config
+		if !cmd.Flags().Changed("proto") {
+			cfg, _, _ := loadConfig()
+			if cfg.GitProtocol != "" {
+				createProjectProto = cfg.GitProtocol
+			}
+		}
+
 		// 1. Env Check
 		wd, err := os.Getwd()
 		if err != nil {

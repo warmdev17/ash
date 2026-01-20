@@ -9,7 +9,8 @@ type GitLabGroup struct {
 
 // AshConfig defines ~/.config/ash/config.json structure
 type AshConfig struct {
-	Groups []GitLabGroup `json:"groups"`
+	Groups      []GitLabGroup `json:"groups"`
+	GitProtocol string        `json:"git_protocol"`
 }
 
 type glProject struct {
