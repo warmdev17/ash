@@ -112,7 +112,6 @@ func createOneProject(wd string, groupID int64, name string, proto string) TaskR
 
 	out, err := createCmd.Output()
 	if err != nil {
-		// Check nếu lỗi do trùng tên hoặc lỗi mạng
 		return TaskResult{Name: name, Status: "ERR", Message: "GitLab create failed"}
 	}
 
@@ -139,8 +138,6 @@ func refreshProjectMeta(ashDir string, groupID int64) {
 	prjs, _ := apiListProjects(groupID)
 	if len(prjs) > 0 {
 		var newMeta subgroupMeta
-		// Đọc lại để giữ thông tin cũ (nếu có field khác), ở đây tui đơn giản hóa
-		// Nếu file không tồn tại hoặc lỗi đọc thì coi như empty struct
 		readJSON(filepath.Join(ashDir, "subgroup.json"), &newMeta)
 
 		idents := make([]projectIdent, 0, len(prjs))
@@ -148,8 +145,6 @@ func refreshProjectMeta(ashDir string, groupID int64) {
 			idents = append(idents, projectIdent{ID: p.ID, Path: p.Path, Name: p.Name})
 		}
 		newMeta.Projects = idents
-		// Giữ lại Group ID cũ nếu cần, hoặc giả định apiListProjects là đúng
-		// Ở đây ta chỉ update list project
 		writeJSON(filepath.Join(ashDir, "subgroup.json"), newMeta)
 	}
 }
