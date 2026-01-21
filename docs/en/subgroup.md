@@ -15,7 +15,7 @@ ash subgroup [command]
 List subgroups of a specific group.
 
 ```bash
-ash subgroup list --group <parent-group-id>
+ash subgroup list
 ```
 
 ### create
@@ -23,28 +23,33 @@ ash subgroup list --group <parent-group-id>
 Create a new subgroup.
 
 ```bash
-ash subgroup create
+ash subgroup create <Name>
 ```
 
 **Flags:**
-- `-n, --name string`: Name of the subgroup
-- `-p, --parent string`: ID or path of the parent group
-- `-s, --slug string`: Path/Slug for the subgroup
+
+- `--dir string`: Custom local directory name (default: same as subgroup name).
+- `--visibility string`: Visibility level (public/internal/private) (default: `public`).
 
 ### delete
 
 Delete a subgroup.
 
 ```bash
-ash subgroup delete <subgroup-id-or-path>
+ash subgroup delete <Name or ID>
 ```
+
+**Flags:**
+
+- `-f, --force`: Force delete on GitLab.
+- `-l, --local-force`: Also delete the local directory.
 
 ### clone
 
 Clone a subgroup and all its repositories.
 
 ```bash
-ash subgroup clone <subgroup-id-or-path>
+ash subgroup clone <Name or ID>
 ```
 
 ### sync
@@ -52,5 +57,9 @@ ash subgroup clone <subgroup-id-or-path>
 Sync all projects within a subgroup.
 
 ```bash
-ash subgroup sync <subgroup-id-or-path>
+ash subgroup sync
 ```
+
+**Flags:**
+
+- `--clean`: Delete local folders of projects that identify as orphans.

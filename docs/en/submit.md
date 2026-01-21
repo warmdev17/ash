@@ -1,6 +1,6 @@
 # Submit Command
 
-The `submit` command automates the homework submission process. It pushes your changes to GitLab and creates a Merge Request.
+The `submit` command automates the homework submission process. It updates your changes to GitLab.
 
 ## Usage
 
@@ -11,29 +11,32 @@ ash submit [flags]
 ## Description
 
 This command performs the following actions:
-1. Adds all changes (`git add .`)
-2. Commits changes with a message (`git commit -m "Submit homework"`)
-3. Pushes to the current branch (`git push origin <branch>`)
-4. Creates a Merge Request (MR) targeting the default branch.
+
+1. Scans local directory for valid project folders (targets).
+2. Prompts for commit message (if not provided via `-m`).
+3. Executes `git add .`, `git commit`, and `git push` for each target.
 
 ## Flags
 
-- `-m, --message string`: Custom commit message (default "Submit homework")
-- `-t, --title string`: Title of the Merge Request (default is the last commit message)
-- `-d, --description string`: Description of the Merge Request
-- `--draft`: Create the MR as a Draft
-- `-l, --label strings`: Add labels to the MR
-- `-a, --assignee strings`: Assign users to the MR
-- `-r, --reviewer strings`: Request reviewers for the MR
+- `--all`: Submit all assignments in the current session (subgroup) non-interactively.
+- `-m, --message string`: Commit message.
 
 ## Examples
 
-Basic submission:
+Interactive submission:
+
 ```bash
 ash submit
 ```
 
-Submission with custom message and labels:
+Submit with custom message:
+
 ```bash
-ash submit -m "Complete Assignment 1" -l "homework,backend"
+ash submit -m "Complete Assignment 1"
+```
+
+Submit all assignments in the current directory:
+
+```bash
+ash submit --all
 ```

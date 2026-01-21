@@ -23,29 +23,30 @@ ash group list
 Create a new group in GitLab.
 
 ```bash
-ash group create
+ash group create <Name>
 ```
 
-**Flags:**
-- `-n, --name string`: Name of the group
-- `-p, --path string`: Path of the group (slug)
-- `-d, --description string`: Description of the group
-- `--visibility string`: Visibility level (public, internal, private)
+*(No flags)*
 
 ### delete
 
 Delete an existing group.
 
 ```bash
-ash group delete <group-id-or-path>
+ash group delete <group-name (folder name), id or path>
 ```
+
+**Flags:**
+
+- `-f, --force`: Force delete on GitLab (even if not empty).
+- `-l, --local-force`: Also delete the local directory.
 
 ### get
 
-Get details of a specific group.
+Get all managed groups information and save to config file.
 
 ```bash
-ash group get <group-id-or-path>
+ash group get
 ```
 
 ### clone
@@ -53,13 +54,21 @@ ash group get <group-id-or-path>
 Clone a group and all its repositories.
 
 ```bash
-ash group clone <group-id-or-path>
+ash group clone <Name or ID>
 ```
+
+**Flags:**
+
+- `--git-proto string`: Clone protocol (ssh/https) (default: `https`).
 
 ### sync
 
-Sync all projects within a simple group or a list of groups defined in a file.
+Sync all projects within a simple group or a list of groups defined in the config file.
 
 ```bash
 ash group sync
 ```
+
+**Flags:**
+
+- `--clean`: Delete local folders of subgroups that identify as orphans (removed from GitLab).
