@@ -20,25 +20,34 @@ ash project list
 
 ### create
 
-Tạo một project mới trong GitLab.
+1. Tạo một project đơn lẻ mới trên GitLab.
 
 ```bash
-ash project create
+ash project create <tên project>
 ```
 
 **Flags:**
-- `-n, --name string`: Tên của project
-- `-d, --description string`: Mô tả về project
-- `-g, --group string`: Namespace (group) để tạo project bên trong
-- `--visibility string`: Mức độ hiển thị (public, internal, private)
-- `--init`: Khởi tạo với README
+
+- `-g, --proto string`: ssh hoặc https ( mặc định https )
+
+1. Tạo hàng loạt project với prefix trên GitLab
+
+```bash
+ash project create -c <số lượng> -p <prefix>
+```
+
+**Flags:**
+
+- `-g, --proto string`: ssh hoặc https ( mặc định https )
+- `-c, --count number`: Tạo một lần <number> project
+- `-p, --prefix string`: Prefix cho tên project ( ví dụ `Baitap` với -c là 5 tạo 5 project có tên `Baitap1....Baitap5`)
 
 ### delete
 
 Xóa một project hiện có.
 
 ```bash
-ash project delete <project-id-or-path>
+ash project delete <tên project>
 ```
 
 ### clone
@@ -46,7 +55,7 @@ ash project delete <project-id-or-path>
 Clone một project.
 
 ```bash
-ash project clone <project-id-or-path>
+ash project clone <tên project>
 ```
 
 ### sync
@@ -54,5 +63,5 @@ ash project clone <project-id-or-path>
 Sync (clone hoặc pull) tất cả các dự án trong một group được chỉ định.
 
 ```bash
-ash project sync <group-id-or-path>
+ash project sync <tên project>
 ```
