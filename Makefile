@@ -4,7 +4,7 @@
 
 BINARY      := ash
 DIST        := dist
-VERSION     ?= 2.0.2
+VERSION     ?= 2.1.0
 
 LDFLAGS     := -s -w
 BUILD_FLAGS := -trimpath -ldflags "$(LDFLAGS)"
